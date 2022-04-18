@@ -1,0 +1,688 @@
+
+<!--DOCTYPE html-->
+<html>
+	<head>
+		<title>輪盤遊戲</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+		<style type="text/css">
+			@import "final.css";
+		</style>
+	</head>
+	<body>
+		<canvas id="wheelcanvas" width="500" height="500"></canvas> 
+		<!--<button type="button" onclick="spin()" style="width:120px;height:40px;font-size:20px;">開始</button>-->
+		<!--<button type="button" onclick="clean()" style="position: absolute;left:515px;top:580px;width:120px;height:40px;font-size:20px;">
+		清除</button>-->
+		<div class="num_table">
+			<table class="number" border="10" bgcolor="black">
+				<!--
+				<tr id="first_row">
+					<td rowspan="1" id="0" onclick="putmoney(this)" style="background-color:purple">0</td>
+				</tr>
+				<tr id="second_row">
+					<td rowspan="4" id="0" onclick="putmoney(this)">
+				-->
+				<tr id="first_row">
+					<td rowspan="3" id="0" onclick="putmoney(this)" style="background-color:purple">0</td>	
+				</tr>
+				<tr id="second_row"></tr>													
+				<tr id="third_row"></tr>
+				
+				<tr id="fourth_row">
+					<td height="70px" rowspan="2" style="background-color:purple"></td>
+					<td height="70px" id="1st" onclick="putmoney_other(this)" colspan="4" style="background-color:purple">1st 12</td>
+					<td height="70px" id="2nd" onclick="putmoney_other(this)" colspan="4" style="background-color:purple">2nd 12</td>
+					<td height="70px" id="3rd" onclick="putmoney_other(this)" colspan="4" style="background-color:purple">3rd 12</td>
+					<td height="70px" rowspan="2" style="background-color:purple"></td>
+				</tr>
+				
+				<tr id="fifth_row">
+					<td height="70px" id="1_to_18" onclick="putmoney_other(this)" colspan="2" style="background-color:purple">1 to 18</td>
+					<td height="70px" id="put_even" onclick="putmoney_other(this)" colspan="2" style="background-color:purple">EVEN</td>
+					<!--<td height="50px" id="color_pink" onclick="putmoney_other(this)" colspan="2" style="background-color:pink;"></td>-->
+					<td height="70px" id="color_purple" colspan="2" style="background-color:purple;"><button type="button" onclick="spin()" style="width:70px;height:40px;font-size:20px;">開始</button></td>
+					<!--<td height="50px" id="color_black" onclick="putmoney_other(this)" colspan="2" style="background-color:black;"></td>-->
+					<td height="70px" id="color_purple" colspan="2" style="background-color:purple;"><button type="button" onclick="clean()" style="width:70px;height:40px;font-size:20px;">
+		清除</button></td>
+					<td height="70px" id="put_odd" onclick="putmoney_other(this)" colspan="2" style="background-color:purple">ODD</td>
+					<td height="70px" id="19_to_36" onclick="putmoney_other(this)" colspan="2" style="background-color:purple">19 to 36</td>
+				</tr>
+				
+			</table>
+		</div>
+		
+
+		<p id="money" style="top:500px;left:600px;">剩餘金額: </p>
+		<p id="putmoney" style="left:600px;top:450px;">已賭金額: </p>
+		
+		<!--
+		<p style="left:1000px;top:385px;">賠率表</p>
+		<p style="left:1000px;top:435px;">賭數字 1:35</p>
+		<p style="left:1000px;top:485px;">賭數字行(2 to 1) 1:2</p>
+		<p style="left:1000px;top:535px;">賭數字下第1行(1st 12) 1:2</p>
+		<p style="left:1000px;top:585px;">賭數字下第2行(1 to 18、EVEN、顏色) 1:1</p>
+		-->
+	
+		<!--<div id = "coin10" onmouseenter = "select()" onmouseleave = "select_over()">-->
+			<div id = "coin10" onclick = "switchcoin(this)"></div>
+			<div id = "coin25" onclick = "switchcoin(this)"></div>
+			<div id = "coin50" onclick = "switchcoin(this)"></div>
+		<!--</div>-->
+	
+	</body>
+	<script type="application/javascript">  
+		
+	var startAngle = 0;
+	var arc = Math.PI / 18.5;
+	var spinTimeout = null;
+	var spinsize = 250;
+  
+	var spinArcStart = 10;
+	var spinTime = 0;
+	var spinTimeTotal = 0;
+	var ctx;
+	var check = true;
+	
+	var total_money = 1000;
+	var put_money = 0;
+	var now_put = 10;
+	var left_img = 25;
+	var right_img = 50;
+	var win_number;
+	
+	function draw(){
+		drawRouletteWheel();
+		drawTable();
+		var text = document.getElementById("money");
+		text.innerHTML += total_money;
+		
+		text = document.getElementById("putmoney");
+		text.innerHTML += put_money;
+	}
+	
+	function isEven(n) {
+		return (n % 2 == 0);
+	}
+
+	function isOdd(n) {
+		return (Math.abs(n) % 2 == 1);
+	}
+  
+	function getText(i) {
+		var text;
+		if (i === 36)
+			text = "0";
+		else if (isEven(i))
+			text = (i+1).toString();
+		else if (isOdd(i))
+			text = (i+1).toString();
+		return text;
+	}
+
+	function drawRouletteWheel() {
+		var canvas = document.getElementById("wheelcanvas");
+		if (canvas.getContext) {
+			var outsideRadius = 240;
+			var textRadius = 200;
+			var insideRadius = 165;
+      
+			ctx = canvas.getContext("2d");
+			ctx.clearRect(0,0,1000,1000);
+      
+      
+			ctx.strokeStyle = "white";
+			ctx.lineWidth = 5;
+      
+			ctx.font = 'bold 28px Avenir Next, sans-serif';
+			     
+	  
+			for(var i = 0; i < 37; i++) {
+				var angle = startAngle + i * arc;
+				if (i === 36)
+					ctx.fillStyle = "purple";
+				else if (isEven(i+1))
+					ctx.fillStyle = "pink";
+				else if (isOdd(i+1))
+					ctx.fillStyle = "black";
+        
+				ctx.beginPath();
+				ctx.arc(spinsize, spinsize, outsideRadius, angle, angle + arc, false);
+				ctx.arc(spinsize, spinsize, insideRadius, angle + arc, angle, true);
+				ctx.stroke();
+				ctx.fill();
+        
+				ctx.beginPath();
+				ctx.arc(spinsize, spinsize, insideRadius, angle, angle + arc, false);
+				ctx.arc(spinsize, spinsize, 0, angle + arc, angle, true);
+				ctx.stroke();
+				ctx.fill();
+		
+				ctx.save();
+
+				if (i === 36){
+					ctx.fillStyle = "black";
+				}
+				else if (isEven(i+1)){
+					ctx.fillStyle = "black";
+				}
+				else if (isOdd(i+1)){
+					ctx.fillStyle = "white";
+				}
+				ctx.translate(spinsize + Math.cos(angle + arc / 2) * textRadius, spinsize + Math.sin(angle + arc / 2) * textRadius);
+				ctx.rotate(angle + arc / 2 + Math.PI / 2);
+				var text = getText(i);
+				ctx.fillText(text, -ctx.measureText(text).width / 2, 0);
+				ctx.restore();
+			} 
+      
+			ctx.beginPath();
+			ctx.arc(spinsize, spinsize, 130, 0, 2*Math.PI, false);
+			ctx.fillStyle = "rgba(255,255,255,0.7)";
+			ctx.stroke();
+			ctx.fill();
+		
+			//Arrow
+			ctx.fillStyle = "gold";
+			ctx.beginPath();
+			ctx.moveTo(spinsize - 8, spinsize - (outsideRadius + 10));
+			ctx.lineTo(spinsize + 8, spinsize - (outsideRadius + 10));
+			ctx.lineTo(spinsize + 8, spinsize - (outsideRadius - 10));
+			ctx.lineTo(spinsize + 18, spinsize - (outsideRadius - 10));
+			ctx.lineTo(spinsize + 0, spinsize - (outsideRadius - 26));
+			ctx.lineTo(spinsize - 18, spinsize - (outsideRadius - 10));
+			ctx.lineTo(spinsize - 8, spinsize - (outsideRadius - 10));
+			ctx.lineTo(spinsize - 8, spinsize - (outsideRadius + 10));
+			ctx.fill();
+		}
+	}
+  
+	function spin() {
+		if(check == true){
+			if(check_money() == true){
+				var text = document.getElementById("money");
+				total_money -= put_money;
+				text.innerHTML = "剩餘金額: "+total_money;
+				
+				check = false;
+				spinAngleStart = Math.random() * 10 + 10;
+				spinTime = 0;
+				spinTimeTotal = Math.random() * 3 + 4 * 1618;
+				rotateWheel();
+			}
+			else
+				alert("籌碼不夠!!");
+		}
+	}
+  
+	function rotateWheel() {
+		spinTime += 30;
+		if(spinTime >= spinTimeTotal) {
+			stopRotateWheel();
+			return;
+		}
+		var spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
+		startAngle += (spinAngle * Math.PI / 180);
+		drawRouletteWheel();
+		spinTimeout = setTimeout('rotateWheel()', 30);
+	}
+  
+	function stopRotateWheel() {
+		clearTimeout(spinTimeout);
+		var degrees = startAngle * 180 / Math.PI + 90;
+		var arcd = arc * 180 / Math.PI;
+		var index = Math.floor((360 - degrees % 360) / arcd);
+		ctx.save();
+		if (index === 36) {
+			ctx.fillStyle = "purple";
+			ctx.shadowColor   = "white";
+		}
+		else if (isEven(index+1)) {
+			ctx.fillStyle = "black";
+			ctx.shadowColor   = "pink";
+		}
+		else if (isOdd(index+1)) {
+			ctx.fillStyle = "pink";
+			ctx.shadowColor   = "black";
+		}
+		ctx.font = 'bold 150px sans-serif';
+		ctx.shadowOffsetX = -2;
+		ctx.shadowOffsetY = -2;
+		ctx.shadowBlur    = 1;
+
+		var text = getText(index);
+		win_number = text;
+		ctx.fillText(text, spinsize - ctx.measureText(text).width / 2, spinsize + 52);
+		ctx.restore();
+		check = true;
+		checkwin();
+	}
+  
+	function easeOut(t, b, c, d) {
+		var ts = (t/=d)*t;
+		var tc = ts*t;
+		return b+c*(tc + -3*ts + 3*t);
+	}
+	
+	function drawTable(){
+		var numf = 1;
+		var nums = 0;
+		var numt = 0;
+		var color = "black";
+		var table;
+		var newcell;
+		var temp;
+		for(var i=1;i<37;i++){
+			if(i%3 == 0){
+				table = document.getElementById("third_row");	
+				newcell = table.insertCell(numt);				
+				numt++;
+			}				
+			else if(i%3 == 1){
+				table = document.getElementById("first_row");
+				newcell = table.insertCell(numf);
+				numf++;
+			}
+			else{
+				table = document.getElementById("second_row");
+				newcell = table.insertCell(nums);
+				nums++;
+			}
+			
+			if(i%2 == 0)
+				color = "pink";
+			else
+				color = "black";
+			
+			temp = ""+i;
+			newcell.style.backgroundColor = color;
+			newcell.id = temp;
+			newcell.onclick = function (){	//newcell.onclick = putmoney 不能取得this的資訊
+				putmoney(this);
+			}		 
+			newcell.innerHTML = temp; 
+		}
+		
+		table = document.getElementById("third_row");		
+		newcell = table.insertCell(numt);
+		newcell.style.backgroundColor = 'purple';
+		newcell.innerHTML = "2<br>to<br>1";
+		newcell.id = "2_to_1_3";
+		newcell.onclick = function (){
+			putmoney_other(this);
+		}
+		
+		table = document.getElementById("second_row");
+		newcell = table.insertCell(nums);
+		newcell.style.backgroundColor = 'purple';
+		newcell.innerHTML = "2<br>to<br>1";
+		newcell.id = "2_to_1_2";
+		newcell.onclick = function (){
+			putmoney_other(this);
+		}
+		
+		table = document.getElementById("first_row");
+		newcell = table.insertCell(numf);
+		newcell.style.backgroundColor = 'purple';
+		newcell.innerHTML = "2<br>to<br>1";
+		newcell.id = "2_to_1_1";
+		newcell.onclick = function (){
+			putmoney_other(this);
+		}
+	}
+	
+	function putmoney(obj){	
+		if(check == true){
+			var num = new Number(obj.id);
+			var temp,checkcoin;
+			if(obj.style.backgroundColor != 'pink' && obj.style.backgroundColor != 'black' && obj.style.backgroundColor != 'purple'){
+				if(obj.style.backgroundColor == 'red'){
+					temp = 10;
+				}
+				else if (obj.style.backgroundColor == 'lightblue'){
+					temp = 25;
+				}
+				else{
+					temp = 50;
+				}
+				if(num == 0)
+					obj.style.backgroundColor = 'purple';
+				else if(num%2 == 0)
+					obj.style.backgroundColor = 'pink';
+				else
+					obj.style.backgroundColor = 'black';
+							
+				put_money -= temp;
+			}
+			else{
+				if(now_put == 10){
+					obj.style.backgroundColor = 'red';
+				}
+				else if (now_put == 25){
+					obj.style.backgroundColor = 'lightblue';
+				}
+				else{
+					obj.style.backgroundColor = 'yellow';
+				}
+			
+				checkcoin = put_money;
+				put_money += now_put;
+				if(put_money >1000){
+					alert("籌碼不夠!!");
+					put_money = checkcoin;
+					if(num%2 == 0)
+						obj.style.backgroundColor = 'pink';
+					else
+						obj.style.backgroundColor = 'black';
+				}
+			}
+		
+			var text = document.getElementById("putmoney");
+				text.innerHTML = "已賭金額: " + put_money;
+		}
+	}
+	
+	function checkwin(){
+		var check_table = document.getElementById(win_number);
+		var text = document.getElementById("money");
+		
+		
+		if(check_table.style.backgroundColor == 'red' || check_table.style.backgroundColor == 'black')
+			;
+		else{
+			if(check_table.style.backgroundColor == 'red'){
+				total_money = total_money + 10*36;				
+			}
+			else if(check_table.style.backgroundColor == "lightblue"){
+				total_money = total_money + 25*36;			
+			}
+			else if(check_table.style.backgroundColor == "yellow"){
+				total_money = total_money + 50*36;		
+			}
+		}
+		
+		checkOtherWin(document.getElementById("1st"));
+		checkOtherWin(document.getElementById("2nd"));
+		checkOtherWin(document.getElementById("3rd"));
+		checkOtherWin(document.getElementById("1_to_18"));
+		checkOtherWin(document.getElementById("19_to_36"));
+		checkOtherWin(document.getElementById("put_even"));
+		checkOtherWin(document.getElementById("put_odd"));
+		checkOtherWin(document.getElementById("2_to_1_1"));
+		checkOtherWin(document.getElementById("2_to_1_2"));
+		checkOtherWin(document.getElementById("2_to_1_3"));
+		text = document.getElementById("money");
+		text.innerHTML = "剩餘金額: " + total_money;
+			
+			
+		clean();
+			
+	}
+	
+	function movecoin(obj1,obj2,pos1,pos2,opa1,opa2,goback){
+		var timer = null;
+		
+		clearInterval(timer);
+		
+        var speed1,speed2;
+		var check = 0;
+		opa1 = new Number(opa1);
+		opa2 = new Number(opa2);
+		if(goback == 1){
+			speed1 = -10;
+			speed2 = 10;
+		}
+		else{
+			speed1 = 10;
+			speed2 = -10;
+		}
+		
+        timer = setInterval(function () {
+            if (obj1.offsetLeft <= pos1 || obj2.offsetLeft >= pos2) {
+				if(goback == 1)
+					clearInterval(timer);
+            }
+			if(obj1.offsetLeft >= pos1 || obj2.offsetLeft <= pos2){
+				if(goback == 0){
+					clearInterval(timer);
+					obj1.style.display = "none";
+					obj2.style.display = "none";
+					check = 1;
+				}
+			}
+			if(check == 0){
+				if(goback == 1){
+					opa1 += 0.1;
+					opa2 += 0.1;
+				}
+				else{
+					opa1 -= 0.2;
+					opa2 -= 0.2;
+				}
+				
+				if(opa1 > 1)
+					opa1 = 1;
+				else if(opa1 < 0.2)
+					opa1 = 0.2;
+				if(opa2 > 1)
+					opa2 = 1;
+				else if(opa2 < 0.2)
+					opa2 = 0.2;
+				
+				if(obj2.offsetLeft >= pos2 && goback == 1){
+					speed2 = 0;
+				}
+				if(obj2.offsetLeft <= pos2 && goback == 0){
+					speed2 = 0;
+				}
+				if(obj1.offsetLeft >= pos1 && goback == 0){
+					speed1 = 0;
+				}
+				if(obj1.offsetLeft <= pos1 && goback == 1){
+					speed1 = 0;
+				}
+		
+				obj1.style.left = obj1.offsetLeft + speed1 + 'px';
+				obj1.style.opacity = opa1;
+			
+				obj2.style.left = obj2.offsetLeft + speed2 + 'px';
+				obj2.style.opacity = opa2;
+			}
+        }, 20);
+		
+	}
+	
+	function select(){
+		var coin25 = document.getElementById("coin25");
+		var coin50 = document.getElementById("coin50");
+		var opa25 = $("#coin25").css("opacity");
+		var opa50 = $("#coin50").css("opacity");
+		
+		coin25.style.display = "block";
+		coin50.style.display = "block";
+		movecoin(coin25,coin50,-80,140,opa25,opa50,1);
+	}
+	
+	function select_over(){
+		var coin25 = document.getElementById("coin25");
+		var coin50 = document.getElementById("coin50");
+		var opa25 = $("#coin25").css("opacity");
+		var opa50 = $("#coin50").css("opacity");
+		movecoin(coin25,coin50,30,30,opa25,opa50,0);
+		
+	}
+	
+	function switchcoin(obj){
+		var image = document.getElementById("coin10");
+		var temp = now_put;
+		if(obj.id == "coin25"){
+			image.style.backgroundImage = "url(" + left_img + ".png)";
+			now_put = left_img;
+			left_img = temp;
+		}
+		else{
+			image.style.backgroundImage = "url(" + right_img + ".png)";
+			now_put = right_img;
+			right_img = temp;
+		}
+		obj.style.backgroundImage = "url(" + temp + ".png)";
+	}
+	
+	function check_money(){
+		if(total_money < put_money)
+			return false;
+		else
+			return true;
+	}
+	
+	function clean(){
+		if(check == true){
+			var text;
+			for(var i=1;i<37;i++){
+					text = document.getElementById(""+i);
+					if(i%2==0)
+						text.style.backgroundColor = 'pink';
+					else
+						text.style.backgroundColor = 'black';
+				}
+			text = document.getElementById("0");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("1st");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("2nd");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("3rd");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("1_to_18");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("put_even");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("put_odd");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("19_to_36");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("2_to_1_1");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("2_to_1_2");
+			text.style.backgroundColor = 'purple';
+			text = document.getElementById("2_to_1_3");
+			text.style.backgroundColor = 'purple';
+			put_money = 0;
+			text = document.getElementById("putmoney");
+			text.innerHTML = "已賭金額: " + put_money;
+		}
+	}
+	
+	function putmoney_other(obj){
+		if(check == true){
+			var temp,checkcoin;
+			
+			if(obj.style.backgroundColor != 'purple' && obj.style.backgroundColor != 'black' && obj.style.backgroundColor != 'red'){
+				if(obj.style.backgroundColor == 'red'){
+					temp = 10;
+				}
+				else if (obj.style.backgroundColor == 'lightblue'){
+					temp = 25;
+				}
+				else{
+					temp = 50;
+				}
+				if(obj.id == 'color_pink')
+					obj.style.backgroundColor = 'pink';
+				else if(obj.id == 'color_black')
+					obj.style.backgroundColor = 'black';
+				else
+					obj.style.backgroundColor = 'purple';			
+				put_money -= temp;
+			}
+			else{
+				if(now_put == 10){
+					obj.style.backgroundColor = 'red';
+				}
+				else if (now_put == 25){
+					obj.style.backgroundColor = 'lightblue';
+				}
+				else{
+					obj.style.backgroundColor = 'yellow';
+				}
+			
+				checkcoin = put_money;
+				put_money += now_put;
+				if(put_money >total_money){
+					alert("籌碼不夠!!");
+					put_money = checkcoin;
+					obj.style.backgroundColor = 'purple';
+				}
+			}
+		
+			var text = document.getElementById("putmoney");
+				text.innerHTML = "已賭金額: " + put_money;
+		}
+	}
+	
+	function checkOtherWin(obj){
+		var win = 0;
+		if(obj.id == "1st" && obj.style.backgroundColor != 'purple'){
+			if(win_number < 13)
+				win = 3;	
+		}
+		else if(obj.id == "2nd" && obj.style.backgroundColor != 'purple'){
+			if(win_number < 25 && win_number > 12)
+				win = 3;
+		}
+		else if(obj.id == "3rd" && obj.style.backgroundColor != 'purple'){
+			if(win_number < 37 && win_number > 24)
+				win = 3;
+		}
+		else if(obj.id == "1_to_18" && obj.style.backgroundColor != 'purple'){
+			if(win_number < 19 )
+				win = 2;
+		}
+		else if(obj.id == "19_to_36" && obj.style.backgroundColor != 'purple'){
+			if(win_number < 37 && win_number > 18)
+				win = 2;
+		}
+		else if(obj.id == "put_even" && obj.style.backgroundColor != 'purple'){
+			if(win_number % 2 == 0)
+				win = 2;
+		}
+		else if(obj.id == "put_odd" && obj.style.backgroundColor != 'purple'){
+			if(win_number % 2 == 1)
+				win = 2;
+		}
+		else if(obj.id == "color_red" && obj.style.backgroundColor != 'purple'){
+			if(win_number % 2 == 0)
+				win = 2;
+		}
+		else if(obj.id == "color_black" && obj.style.backgroundColor != 'purple'){
+			if(win_number % 2 == 1)
+				win = 2;
+		}
+		else if(obj.id == "2_to_1_1" && obj.style.backgroundColor != 'purple'){
+			if(win_number % 3 == 1)
+				win = 3;
+		}
+		else if(obj.id == "2_to_1_2" && obj.style.backgroundColor != 'purple'){
+			if(win_number % 3 == 2)
+				win = 3;
+		}
+		else if(obj.id == "2_to_1_3" && obj.style.backgroundColor != 'purple'){
+			if(win_number % 3 == 0)
+				win = 3;
+		}
+
+		else
+			win = 0;
+		
+		if(obj.style.backgroundColor == 'red')
+			total_money = total_money + 10*win;				
+		else if(obj.style.backgroundColor == "lightblue")
+			total_money = total_money + 25*win;			
+		else if(obj.style.backgroundColor == "yellow")
+			total_money = total_money + 50*win;
+	}
+	
+	draw();
+	
+</script>
+</html>

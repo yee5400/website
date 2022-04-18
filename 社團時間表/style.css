@@ -1,0 +1,16 @@
+body{
+    background-color:rgb(255, 241, 196);
+    text-align: center;
+}
+table{
+    color: rgb(156, 206, 133);
+    border-style:dotted;
+    font-size:1.5em;
+    width:900px;
+    position:absolute;
+    left:20%;
+}
+td,th{
+    color: rgb(3, 60, 126);
+    border-style:solid;
+}
