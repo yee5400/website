@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>薪資試算</title>
+</head>
+
+<body>
+    <h1>相親結婚所</h1><h5>(改編自老師的徵才投影片 :學歷越高費用越低，結過婚+2000。戀愛經驗越長收費越高)</h5>
+    
+    <div id="app">
+        姓名 : <input type="text" v-model="name"><br><br>
+        學歷 :
+        <input type="radio" v-model="graduationIndex" value="0"><label for="bachelor">高中</label>
+        <input type="radio" v-model="graduationIndex" value="1"><label for="bachelor">大學</label>
+        <input type="radio" v-model="graduationIndex" value="2"><label for="master">碩士</label>
+        <input type="radio" v-model="graduationIndex" value="3"><label for="phd">博士</label>
+        <p>其他資訊</p>
+        <input type="checkbox" v-model="club_experience"> 結過婚 : {{club_experience}}<br>
+        <input type="checkbox" v-model="work_experience" true-value="有" false-value="無" @change="reset_work_experience">
+        最長戀愛經驗 : {{work_experience}}
+        <select v-model="selectedIndex" v-show="work_experience=='有'">
+            <option v-for="(stringItem, index) in statusList" :value="index">
+                {{stringItem}}
+            </option>
+        </select>
+        <br><br>
+        <button @click="displaySummary">摘要</button> {{summary}}
+        <br><br>
+        <button @click="calculate">媒婆費用</button>
+        <span v-show="showResult">NT${{result_realtime.toLocaleString('zh-TW')}}</span>
+    </div>
+    <script src="//unpkg.com/vue@next"></script>
+    <script src="main.js"></script>
+<!-- Code injected by live-server -->
+<script type="text/javascript">
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script></body>
+</html>
